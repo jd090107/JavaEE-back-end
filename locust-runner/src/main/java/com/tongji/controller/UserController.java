@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Random;
 
@@ -29,11 +31,9 @@ public class UserController {
     @Autowired
     MailService mailService;
 
-    @Autowired
-    CookieController cookieController;
 
     @RequestMapping(value = "/login",method = RequestMethod.POST)
-    public ResultVO lonIn(@RequestParam("account") String account,@RequestParam("password") String password){
+    public ResultVO lonIn(@RequestParam("account") String account, @RequestParam("password") String password,HttpServletRequest httpServletRequest){
         UserInfo user=userService.find(account);
         ResultVO resultVO=new ResultVO();
         if (user==null){
@@ -45,6 +45,8 @@ public class UserController {
             resultVO.setState(1);
             resultVO.setMsg("登录成功");
             resultVO.setData(user);
+            HttpSession session=httpServletRequest.getSession(true);
+            session.setAttribute("account",account);
         }
         else{
             resultVO.setState(0);
@@ -55,7 +57,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/logup",method = RequestMethod.PUT)
-    public ResultVO logUp(@RequestParam("account") String account,@RequestParam("password") String password,@RequestParam("username") String username){
+    public ResultVO logUp(@RequestParam("account") String account,@RequestParam("password") String password,@RequestParam("username") String username,HttpServletRequest httpServletRequest){
         ResultVO resultVO=new ResultVO();
         UserInfo user=userService.find(account);
         if (user!=null){
@@ -72,6 +74,8 @@ public class UserController {
             resultVO.setState(1);
             resultVO.setMsg("注册成功");
             resultVO.setData(user);
+            HttpSession session=httpServletRequest.getSession(true);
+            session.setAttribute("account",account);
         }
         return resultVO;
     }
@@ -83,7 +87,7 @@ public class UserController {
                                @RequestParam("username") String username,
                                HttpServletRequest request) {
 
-        String account = cookieController.getCookies(request);
+        String account = (String)request.getSession(false).getAttribute("account");
 
         ResultVO resultVO = new ResultVO();
         UserInfo user = userService.find(account);
@@ -100,10 +104,8 @@ public class UserController {
 
     @RequestMapping(value = "/out", method = RequestMethod.GET)
     public ResultVO LogOut(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session!=null) {
-            session.invalidate();
-        }
+        HttpSession session=request.getSession(false);
+        session.removeAttribute("account");
         ResultVO resultVO = new ResultVO();
         resultVO.setState(1);
         resultVO.setMsg("成功");
@@ -114,8 +116,8 @@ public class UserController {
     @RequestMapping(value = "/verification", method = RequestMethod.GET)
     public ResultVO verification(HttpServletRequest request) {
 
-        String account = cookieController.getCookies(request);
-
+        String account = (String)request.getSession(false).getAttribute("account");
+        System.out.println(account);
         ResultVO resultVO = new ResultVO();
         String str = "01234567890qwertyuiopasdfghjklzxcvbnm";
         StringBuilder stringBuilder = new StringBuilder();
@@ -151,7 +153,7 @@ public class UserController {
     public ResultVO updatePassword(@RequestParam("password") String password,
                                    HttpServletRequest request) {
 
-        String account = cookieController.getCookies(request);
+        String account =(String)request.getSession(false).getAttribute("account");
 
         ResultVO resultVO = new ResultVO();
         UserInfo user = userService.find(account);

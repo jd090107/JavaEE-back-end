@@ -29,9 +29,6 @@ public class LocustController {
     @Autowired
     private HistoryService historyService;
 
-    @Autowired
-    private CookieController cookieController;
-
     @PostMapping("/init")
     @ApiOperation(value = "runWorkLoad")
     public void init(@RequestParam("host") String host) throws Exception {
@@ -54,7 +51,7 @@ public class LocustController {
         locustParam.setHatchRate(hatchRate);
         locustParam.setRunTime(runTime);
         locustParam.setHost(host);
-        String account = cookieController.getCookies(request);
+        String account = (String)request.getSession(false).getAttribute("account");
         locustService.runWorkLoad(locustParam, account, taskName);
         return args.REPORTID;
     }
@@ -80,7 +77,8 @@ public class LocustController {
     @GetMapping("/history")
     @ApiOperation(value = "getHistoryTask")
     public List<HistoryTask> getHistoryTask(HttpServletRequest request) throws Exception {
-        String userAccount = cookieController.getCookies(request);
+        String userAccount = (String)request.getSession(false).getAttribute("account");
+        System.out.println(userAccount);
         return historyService.getHistoryTask(userAccount);
     }
 
